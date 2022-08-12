@@ -6,7 +6,7 @@ from dino_runner.components.Obstacles.obstacle_manager import ObstacleManager
 from dino_runner.components.power_ups.power_up_manager import PowerUpManager
 
 class Game:
-    def __init__(self):
+    def __init__(self, super_state):
         pygame.init()
         pygame.display.set_caption(TITLE)
         pygame.display.set_icon(ICON)
@@ -20,6 +20,8 @@ class Game:
         self.obstacle_manager = ObstacleManager()
         self.points = 0
         self.power_up_manager = PowerUpManager()
+        if super_state:
+            self.player.lifes = 30
 
     def run(self):
         # Game loop: events - update - draw
@@ -41,15 +43,25 @@ class Game:
     def update(self):
         user_input = pygame.key.get_pressed()
         self.player.update(user_input)
-        self.obstacle_manager.update(self)
+    
+        colision = self.obstacle_manager.update(self, self.player.lifes)
+        if colision:
+            if self.player.lifes >= 0:
+                self.player.lifes -= 1
+                #self.player.shield = True
+                #self.player.shield_time_up = 3
+            else:
+                self.playing = False
+
         self.power_up_manager.update(self.points, self.game_speed, self.player)
+
 
     def draw(self):
         self.score()
         self.clock.tick(FPS)
         self.screen.fill((255, 255, 255))
         self.draw_background()
-        self.player.draw(self.screen)
+        self.player.draw(self.screen, self.points)
         self.obstacle_manager.draw(self.screen)
         self.power_up_manager.draw(self.screen)
         pygame.display.update()
@@ -66,6 +78,7 @@ class Game:
 
     def score(self):
         self.points += 1
+        #print(self.points)
         if self.points % 100 == 0:
             self.game_speed += 1
         self.player.check_invincibility(self.screen)

@@ -1,5 +1,5 @@
 import pygame
-from dino_runner.utils.constants import DEFAULT_TYPE, DUCKING, DUCKING_SHIELD, JUMPING, JUMPING_SHIELD, RUNNING, RUNNING_SHIELD, SHIELD_TYPE
+from dino_runner.utils.constants import DEFAULT_TYPE, DUCKING, DUCKING_SHIELD, JUMPING, JUMPING_SHIELD, RUNNING, RUNNING_SHIELD, SHIELD_TYPE, HEART
 from pygame.sprite import Sprite
 
 class Dinosaur(Sprite):
@@ -21,12 +21,14 @@ class Dinosaur(Sprite):
         self.dino_duck = False
         self.dino_jump = False
         self.jump_vel = self.JUMP_VEL
+        self.time_to_show = 0
         self.setup_state_booleans()
+        self.lifes = 3
 
     def setup_state_booleans(self):
         self.has_powerup = False
         self.shield = False
-        self.show_text = False
+        self.show_text = False#True#False
         self.shield_time_up = 0
 
     def update(self, user_input):
@@ -36,6 +38,9 @@ class Dinosaur(Sprite):
             self.run()
         if self.dino_jump:
             self.jump()
+
+        if user_input[pygame.K_q]:
+            pygame.quit() #Modificar para las vidas
 
         if user_input[pygame.K_DOWN] and not self.dino_jump:
             self.dino_run = False
@@ -80,22 +85,47 @@ class Dinosaur(Sprite):
             self.dino_jump = False
             self.jump_vel = self.JUMP_VEL
 
-    def draw(self, screen):
+    def draw(self, screen, points):
+        font = pygame.font.Font('freesansbold.ttf', 30)#pygame.font.Font(None, 180)#pygame.font.Font('freesansbold.ttf', 180)
+        if self.shield:
+            time_to_show = round((self.shield_time_up - pygame.time.get_ticks()) / 1000, 2) #Por qué no da?
+            if time_to_show >= 0:
+                if self.show_text:
+                    #print("TEXTTTTTTTTTTTTTTT")
+                    #font = pygame.font.Font('freesansbold.ttf', 30)#pygame.font.Font(None, 180)#pygame.font.Font('freesansbold.ttf', 180)
+                    text = font.render(f"Shield enabled for {time_to_show} seconds", True, (0, 0, 0))#F string para el format
+                    #text_rect = text.get_rect()
+                    #text_rect.center = (600, 4)
+                    #screen.blit(text, text_rect)
+                    screen.blit(text, [400, 10])
+
+        text_points = font.render(f"Points: {points}", True, (0, 0, 0))#F string para el format        
+        screen.blit(text_points, [900, 10])
+        self.show_lifes(screen)
         screen.blit(self.image, (self.dino_rect.x, self.dino_rect.y))
+        
+    def show_lifes(self, screen): #En el futuro con imagenes
+        font = pygame.font.Font('freesansbold.ttf', 30)
+        lifes = font.render(f"Lifes: {self.lifes}", True, (0, 0, 0))#F string para el format        
+        screen.blit(lifes, [10, 10])
 
     def check_invincibility(self, screen):
         if self.shield:
-            time_to_show = round((self.shield_time_up - pygame.time.get_ticks()) / 1000, 2)
-            if time_to_show >= 0:
-                if self.show_text:
-                    font = pygame.font.Font('freesansbold.ttf', 18)
-                    text = font.render(f'Shield enable for {time_to_show}', True, (0, 0, 0))
-                    text_rect = text.get_rect()
-                    text_rect.center = (500, 4)
-                    screen.blit(text, text_rect)
-            else:
+            time_to_show = round((self.shield_time_up - pygame.time.get_ticks()) / 1000, 2) #Por qué no da?
+            if not time_to_show >= 0:
                 self.shield = False
                 self.update_to_default(SHIELD_TYPE)
+            #    if self.show_text:
+            #        #print("TEXTTTTTTTTTTTTTTT")
+            #        font = pygame.font.Font(None, 180)#pygame.font.Font('freesansbold.ttf', 180)
+            #        text = font.render(f"Shield enable for {time_to_show}", True, (0, 0, 0))#F string para el format
+            #        text_rect = text.get_rect()
+            #        #text_rect.center = (600, 4)
+            #        #screen.blit(text, text_rect)
+            #        screen.blit(text, [250, 250])
+            #else:
+            #    self.shield = False
+            #    self.update_to_default(SHIELD_TYPE)
     
     def update_to_default(self, current_type):
         if self.type == current_type:
